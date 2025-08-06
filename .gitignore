@@ -1,5 +1,7 @@
-*.out
+*.out*
 *scratch*
+*.nc
+*.hdf*
 
 # pycache files
 *.pyc
