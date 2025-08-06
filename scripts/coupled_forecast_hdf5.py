@@ -230,6 +230,8 @@ def coupled_inference_hdf5(args: argparse.Namespace):
     logger.info("load model checkpoint %s", ocean_checkpoint_path)
 
     # load state dicts and print summary 
+
+    # GR: look into parallelizing data loading with pytorch
     atmos_checkpoint = th.load(atmos_checkpoint_path, map_location=device)
     atmos_model_state_dict = atmos_checkpoint["model_state_dict"]
     atmos_model.load_state_dict(atmos_model_state_dict)
@@ -237,6 +239,8 @@ def coupled_inference_hdf5(args: argparse.Namespace):
     atmos_model.eval()
     print(f'Atmos Model Summary:')
     summary(atmos_model)
+
+    # GR: look into parallelizing data loading with pytorch`
     ocean_checkpoint = th.load(ocean_checkpoint_path, map_location=device)
     ocean_model_state_dict = ocean_checkpoint["model_state_dict"]
     ocean_model.load_state_dict(ocean_model_state_dict)
@@ -531,9 +535,18 @@ if __name__ == '__main__':
                         help="Last time in forecast. Only used if forecast is using datetime64")
     parser.add_argument('--gpu', type=int, default=0,
                         help="Index of GPU device on which to run model. If -1 forecast will be done on CPU")
+    parser.add_argument('--num_threads', type=int, default=112,
+                        help="Number of threads to launch the job with on tiger3.")
 
     configure_logging(2)
     run_args = parser.parse_args()
+
+    ###############################################################################################################
+    # GR: number of threads
+    assert isinstance(run_args.num_threads, int), 'num_threads is not an integer.'
+    th.set_num_threads(run_args.num_threads)
+    # th.set_num_threads(32)
+    ###############################################################################################################
 
     # Hydra requires a relative (not absolute) path to working config directory. It also works in a sub-directory of
     # current python working directory.
